@@ -185,14 +185,11 @@ Aynı şekilde `claude-cli.js` ve `gemini-cli.js` için tekrarla.
 
 ### IDE Setup (Opsiyonel)
 
-**Cursor ile çalışıyorsan:**
+**Herhangi bir IDE/Editor kullanabilirsin:**
+- VS Code, Neovim, IntelliJ, Sublime, veya sadece terminal
 - `MANUAL-WORKFLOW.md` oku
-- Cursor chat'te PM rolü için `/agents plan` kullan
-
-**VS Code'a geçmek istersen:**
-- `VS-CODE-SETUP.md` oku
-- Continue.dev extension kur
-- Task runner yapılandır
+- Terminal yanında aç, komutları copy-paste et
+- IDE-agnostic: Özel kurulum gerekmez!
 
 ---
 
@@ -241,9 +238,10 @@ cd path/to/my-project
 2. Terminal'de agent komutlarını çalıştır
    └─> JSON outputs al
 
-3. Cursor/VS Code'da PM role:
-   - Outputs'ları review et
-   - Sonraki phase komutlarını ver
+3. Sen (PM rolünde):
+   - Agent outputs'larını review et
+   - Sonraki phase'e karar ver
+   - Manuel olarak ilerle
 
 4. Tüm phases complete → git commit
 ```

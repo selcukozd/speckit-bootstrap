@@ -2,40 +2,26 @@
 
 ## Overview
 
-Bu proje **gerçek multi-agent orkestrasyon** kullanır:
-- **PM (Project Manager)**: Cursor/GPT-5 → Task planlama, koordinasyon
-- **Qwen**: Gerçek CLI → Implementation
-- **Claude**: Gerçek CLI → Security review
-- **Gemini**: Gerçek CLI → Infrastructure
+This project uses **real multi-agent orchestration** with manual control:
+- **PM (Project Manager)**: You, the developer → Task planning and coordination
+- **Qwen**: Real CLI agent → Implementation
+- **Claude**: Real CLI agent → Security review
+- **Gemini**: Real CLI agent → Infrastructure
 
-**NOT:** Agent'lar simüle edilmiyor, terminal'de gerçekten çalışıyor!
-
----
-
-## Workflow
-
-### 1️⃣ Spec Oluştur
-
-**Cursor'da:**
-```
-/specify "Kullanıcı authentication sistemi ekle"
-```
-
-**Cursor:**
-- Spec oluşturur
-- Belirsizlikleri işaretler
-- `specs/002-xxx/spec.md` kaydeder
+**NOTE:** Agents are NOT simulated - they run as real CLI processes calling actual APIs!
 
 ---
 
-### 2️⃣ Plan Oluştur
+## Workflow Steps
 
-**Terminal'de:**
+### 1️⃣ Plan a Task
+
+**In your terminal:**
 ```bash
 npm run speckit:plan -- "Implement user authentication"
 ```
 
-**Çıktı:**
+**Output:**
 ```
 📋 Planning task (Manual Multi-Agent Mode)
 
@@ -46,290 +32,304 @@ npm run speckit:plan -- "Implement user authentication"
 ## Phase 1:
 
 ### 🤖 qwen - Create user authentication
-\`\`\`bash
+```bash
 npm run agent:qwen -- implement --task "Create user authentication" --spec "specs/001/spec.md"
-\`\`\`
+```
 
 ## Phase 2:
 
 ### 🔍 claude - Security review
-\`\`\`bash
-npm run agent:claude -- review --focus security,architecture --spec "specs/001/spec.md"
-\`\`\`
+```bash
+npm run agent:claude -- review --files "auth.js" --focus security,architecture
 ```
-
-**Cursor → GPT-5:** Bu çıktıyı Cursor'a yapıştır, PM koordinasyon yapsın
+```
 
 ---
 
-### 3️⃣ Implement (Manuel - Paralel Execution)
+### 2️⃣ Execute Phase 1 - Implementation
 
-**Terminal 1 (Qwen Task 1):**
+**Copy and run the Phase 1 command:**
 ```bash
-npm run agent:qwen -- implement \
-  --task "Create user model" \
-  --files "src/models/user.ts" \
-  --spec "specs/001/spec.md"
+npm run agent:qwen -- implement --task "Create user authentication" --spec "specs/001/spec.md"
 ```
 
-**Output:**
+**Qwen output (example):**
 ```json
 {
   "status": "complete",
   "agent": "qwen",
-  "files_created": ["src/models/user.ts"],
-  "summary": "Implemented: Create user model",
-  "spec": "specs/001/spec.md"
+  "files_created": ["auth.js", "auth.test.js"],
+  "summary": "Implemented user authentication with JWT",
+  "code": {
+    "auth.js": "// implementation code...",
+    "auth.test.js": "// test code..."
+  }
 }
 ```
 
-**Terminal 2 (Qwen Task 2 - Parallel):**
-```bash
-npm run agent:qwen -- implement \
-  --task "Create auth endpoints" \
-  --files "src/api/auth.ts" \
-  --spec "specs/001/spec.md"
-```
-
-**Cursor'a Yapıştır:**
-```
-Phase 1 complete. Qwen outputs:
-
-Task 1:
-{json output}
-
-Task 2:
-{json output}
-```
-
-**Cursor → GPT-5:**
-- Outputs'ları review eder
-- Phase 2 komutlarını verir
+**What to do next:**
+1. Review the JSON output
+2. Check the `code` field for implementation
+3. Save files if needed
+4. Proceed to Phase 2
 
 ---
 
-### 4️⃣ Security Review (Claude)
+### 3️⃣ Execute Phase 2 - Review
 
-**Terminal 3 (Claude):**
+**Copy and run the Phase 2 command:**
 ```bash
-npm run agent:claude -- review \
-  --files "src/models/user.ts,src/api/auth.ts" \
-  --focus security,architecture \
-  --spec "specs/001/spec.md"
+npm run agent:claude -- review --files "auth.js" --focus security,architecture
 ```
 
-**Output:**
+**Claude output (example):**
 ```json
 {
   "status": "approved",
   "agent": "claude",
-  "files": ["src/models/user.ts", "src/api/auth.ts"],
-  "focus": ["security", "architecture"],
-  "spec": "specs/001/spec.md",
-  "issues": []
-}
-```
-
-**Cursor'a Yapıştır:**
-```
-Phase 2 complete. Claude review:
-{json output}
-```
-
-**Cursor → GPT-5:**
-- Review'ı analiz eder
-- Eğer issue varsa → Qwen'e fix komutu üretir
-- Eğer approved → "✅ All complete, ready to commit"
-
----
-
-## Agent CLI Komutları
-
-### Qwen (Implementation)
-
-```bash
-npm run agent:qwen -- implement \
-  --task "Task description" \
-  --files "path/to/file1.ts,path/to/file2.ts" \
-  --spec "specs/001/spec.md"
-```
-
-**Output Format:**
-```json
-{
-  "status": "complete",
-  "agent": "qwen",
-  "files_created": ["path/to/file1.ts"],
-  "summary": "Brief description",
-  "spec": "specs/001/spec.md"
-}
-```
-
----
-
-### Claude (Security Review)
-
-```bash
-npm run agent:claude -- review \
-  --files "src/**/*.ts" \
-  --focus "security,architecture,performance" \
-  --spec "specs/001/spec.md"
-```
-
-**Output Format:**
-```json
-{
-  "status": "approved|rejected",
-  "agent": "claude",
-  "files": ["src/file1.ts"],
-  "focus": ["security"],
-  "spec": "specs/001/spec.md",
+  "files": ["auth.js"],
   "issues": [
     {
-      "severity": "HIGH",
-      "file": "src/auth.ts",
-      "line": 45,
-      "description": "SQL injection risk",
-      "fix": "Use parameterized queries"
+      "severity": "medium",
+      "type": "security",
+      "file": "auth.js",
+      "line": 42,
+      "description": "JWT expiration should be configurable",
+      "recommendation": "Move expiration to environment variable"
     }
-  ]
+  ],
+  "summary": "Minor improvements needed, safe to proceed with fixes"
 }
 ```
 
+**What to do next:**
+1. Review security issues
+2. If CRITICAL issues → fix before proceeding
+3. If MEDIUM/LOW issues → create backlog tasks or fix now
+4. Proceed to Phase 3 or commit
+
 ---
 
-### Gemini (Infrastructure)
+### 4️⃣ Execute Phase 3 (if applicable) - Infrastructure
 
+**Copy and run the Phase 3 command:**
 ```bash
-npm run agent:gemini -- infra setup \
-  --type "database|ci-cd|monitoring" \
-  --config ".speckit/profile.yaml"
+npm run agent:gemini -- infra setup --type "database" --config ".speckit/profile.yaml"
 ```
 
-**Output Format:**
+**Gemini output (example):**
 ```json
 {
   "status": "complete",
   "agent": "gemini",
+  "action": "infra-setup",
   "type": "database",
-  "actions_taken": [
-    "Created PostgreSQL database",
-    "Set up migrations"
-  ]
+  "steps": [
+    {
+      "action": "create_file",
+      "target": "docker-compose.yml",
+      "content": "version: '3.8'..."
+    },
+    {
+      "action": "run_command",
+      "target": "docker-compose up -d"
+    }
+  ],
+  "services": ["postgres", "redis"],
+  "summary": "Database infrastructure configured"
 }
 ```
 
 ---
 
-## Tips & Tricks
+### 5️⃣ Commit Changes
 
-### Paralel Execution
+**After all phases complete:**
 ```bash
-# Ayrı terminal'lerde çalıştır:
-Terminal 1: npm run agent:qwen -- implement --task "Task 1"
-Terminal 2: npm run agent:qwen -- implement --task "Task 2"
-Terminal 3: npm run agent:qwen -- implement --task "Task 3"
-
-# Hepsi bitince outputs'ları Cursor'a yapıştır
-```
-
-### JSON Parsing (Optional)
-```bash
-npm run agent:qwen -- implement --task "Create model" | jq '.files_created'
-```
-
-### Error Handling
-```bash
-# Eğer agent hata verirse:
-npm run agent:qwen -- implement --task "Fix bug" 2>&1 | tee error.log
-
-# Cursor'a yapıştır, düzeltme planı istesin
-```
-
-### Git Workflow
-```bash
-# Phase 1-2-3 complete olduktan sonra:
 git add .
-git commit -m "feat: user authentication"
+git commit -m "feat: implement user authentication"
 git push
 ```
 
 ---
 
-## Current Status
+## Advanced Workflows
 
-**✅ Çalışan:**
-- `npm run speckit:plan` → CLI komutları üretiyor
-- `npm run agent:qwen` → JSON output veriyor (şu an stub)
-- `npm run agent:claude` → JSON output veriyor (şu an stub)
+### Parallel Phase Execution
 
-**🔄 Yapılacak:**
-- Agent CLI'larını gerçek API'lara bağla
-- Qwen API entegrasyonu
-- Claude API entegrasyonu
-- Gemini API entegrasyonu
+If a phase has multiple independent tasks, you can run them in parallel:
 
----
+```bash
+# Terminal 1
+npm run agent:qwen -- implement --task "Task 1"
 
-## Şu Anda Stub (Gerçek API Değil)
+# Terminal 2 (simultaneously)
+npm run agent:qwen -- implement --task "Task 2"
 
-Agent CLI'lar şu an **stub** (sahte veri dönüyor):
+# Terminal 3 (simultaneously)
+npm run agent:qwen -- implement --task "Task 3"
 
-```javascript
-// scripts/agents/qwen-cli.js
-const result = {
-  status: 'complete',
-  agent: 'qwen',
-  files_created: files ? files.split(',') : [],
-  summary: `Implemented: ${task}`,
-  spec
-};
+# Collect all outputs and proceed
 ```
 
-**Gerçek API entegrasyonu için:**
-1. Qwen API key al
-2. `scripts/agents/qwen-cli.js` → API çağrısı ekle
-3. Aynı şekilde Claude ve Gemini için
+---
+
+### Handling Errors
+
+**If an agent fails:**
+```bash
+# Capture error output
+npm run agent:qwen -- implement --task "Fix bug" 2>&1 | tee error.log
+
+# Review error.log and retry with modified parameters
+```
+
+**If Claude vetoes (CRITICAL security issue):**
+```json
+{
+  "status": "requires_changes",
+  "issues": [
+    {
+      "severity": "critical",
+      "description": "SQL injection vulnerability"
+    }
+  ]
+}
+```
+
+→ Fix the issue and re-run implementation and review
 
 ---
 
-## Örnek Session
+### Constitutional Override
+
+**If an agent is blocked by constitutional rules:**
+```bash
+# Override with justification
+npm run speckit:override qwen.cannot.add_dependency "Adding express for routing - approved by tech lead"
+
+# Re-run the blocked task
+npm run agent:qwen -- implement --task "Add express routing"
+```
+
+---
+
+## Full Example Walkthrough
 
 ```bash
 # 1. Plan
-$ npm run speckit:plan -- "Add user profile page"
+npm run speckit:plan -- "Add user profile page"
+#   Output: CLI commands for phases
 
-📝 CLI Commands:
-## Phase 1:
-### 🤖 qwen - Create profile component
-npm run agent:qwen -- implement --task "Create profile component"
+# 2. Execute Phase 1 - Implementation
+npm run agent:qwen -- implement --task "Create profile page" --files "src/pages/profile.tsx"
+#   Output: {"status":"complete","files_created":["src/pages/profile.tsx"]}
 
-# 2. Copy komutu, terminal'de çalıştır
-$ npm run agent:qwen -- implement --task "Create profile component"
-{"status":"complete","files_created":["src/components/Profile.tsx"]}
+# 3. Review output and save files
 
-# 3. Cursor'a yapıştır
-User → Cursor: "Phase 1 complete: {json}"
+# 4. Execute Phase 2 - Review
+npm run agent:claude -- review --files "src/pages/profile.tsx"
+#   Output: {"status":"approved","issues":[]}
 
-# 4. Cursor sonraki komutu verir
-Cursor: "✅ Profile created. Next: Claude review"
-  npm run agent:claude -- review --files "src/components/Profile.tsx"
-
-# 5. Çalıştır, yapıştır
-$ npm run agent:claude -- review --files "src/components/Profile.tsx"
-{"status":"approved","issues":[]}
-
-User → Cursor: "Phase 2 complete: {json}"
-Cursor: "✅ All phases complete. Ready to commit."
+# 5. Commit
+git add src/pages/profile.tsx
+git commit -m "feat: add user profile page"
 ```
 
 ---
 
-## VS Code Setup (Opsiyonel)
+## Tips & Best Practices
 
-Eğer VS Code'a geçersen:
-1. Bu workflow değişmez
-2. Sadece Cursor yerine VS Code terminal kullanırsın
-3. PM rolü için Continue.dev extension + GPT-4 API
+### 1. Keep Terminal History
+Save your terminal commands for repeatability:
+```bash
+history | grep "npm run" > workflow-history.txt
+```
 
-Detaylı VS Code setup: `VS-CODE-SETUP.md` (ayrı dokümanda)
+### 2. Use Shell Aliases
+```bash
+# Add to ~/.bashrc or ~/.zshrc
+alias specplan='npm run speckit:plan --'
+alias qwen='npm run agent:qwen --'
+alias claude='npm run agent:claude --'
+alias gemini='npm run agent:gemini --'
+
+# Usage
+specplan "Add login feature"
+qwen implement --task "Create login"
+```
+
+### 3. JSON Processing
+Use `jq` to parse agent outputs:
+```bash
+npm run agent:qwen -- implement --task "Test" | jq '.summary'
+```
+
+### 4. Stub Mode Testing
+Test the workflow without real API calls:
+- Agents automatically fall back to stub mode if API keys are invalid
+- Use this to validate your workflow before burning API credits
+
+---
+
+## IDE Integration (Optional)
+
+You can integrate this workflow with any IDE or editor:
+
+### VS Code
+- Use integrated terminal
+- Create tasks in `.vscode/tasks.json`
+- Use keyboard shortcuts to run tasks
+
+### Neovim/Vim
+- Use `:terminal` or tmux
+- Map commands to keybindings
+- Use ale or null-ls for linting
+
+### IntelliJ/WebStorm
+- Use built-in terminal
+- Create run configurations
+- Use external tools feature
+
+### Any Editor
+- Open a terminal alongside your editor
+- Copy-paste commands as needed
+- No special setup required!
+
+---
+
+## Troubleshooting
+
+### "API call failed"
+→ Check `.agent-keys.json` has valid API keys
+→ Agent will fallback to stub mode automatically
+
+### "Constitutional rule blocked task"
+→ Use `npm run speckit:override` with justification
+→ Or modify `.speckit/constitutional-rules.yaml`
+
+### "Phase X commands not working"
+→ Ensure you completed previous phases
+→ Check `.speckit/state/current-task.json` for task state
+
+---
+
+## Comparison with Other Tools
+
+**SpecKit vs. Fully Automated Tools:**
+- ✅ Full visibility into agent actions
+- ✅ Control at every step
+- ✅ Easy debugging
+- ✅ No surprises
+- ❌ Requires manual copy-paste
+
+**SpecKit vs. Cursor Composer/GitHub Copilot:**
+- ✅ Multi-agent specialization
+- ✅ Constitutional rules enforcement
+- ✅ Security review built-in
+- ✅ IDE-agnostic
+- ❌ More command-line focused
+
+---
+
+**Philosophy**: Manual control > Full automation. You're the PM, agents are your team.

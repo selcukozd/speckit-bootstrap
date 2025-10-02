@@ -4,6 +4,12 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "echo 'Error: no test suite implemented yet. See tests/ directory' && exit 1",
+    "test:unit": "echo 'Unit tests not implemented'",
+    "test:integration": "echo 'Integration tests not implemented'",
+    "lint": "echo 'Linter not configured. Install eslint with: npm install --save-dev eslint'",
+    "format": "echo 'Formatter not configured. Install prettier with: npm install --save-dev prettier'",
+    "validate": "node scripts/speckit/cli-validator.js",
     "speckit:plan": "node scripts/speckit/orchestrator.js plan",
     "speckit:implement": "node scripts/speckit/orchestrator.js implement",
     "speckit:status": "node scripts/speckit/orchestrator.js status",

@@ -8,7 +8,7 @@ package-lock.json
 
 # SpecKit State (project-specific, don't commit)
 .speckit/state/
-.cursor/context/speckit-*.md
+.speckit/context/
 specs/*/
 
 # Keep example spec

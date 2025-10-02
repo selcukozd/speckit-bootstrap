@@ -15,7 +15,7 @@ export class StateManager {
     await fs.mkdir(this.stateDir, { recursive: true });
     const payload = { taskId, ...state, timestamp: new Date().toISOString() };
     await fs.writeFile(this.currentTaskPath, JSON.stringify(payload, null, 2));
-    await this.updateCursorContext(payload);
+    await this.updateIDEContext(payload);
     await this.gitAddCommitSafe(this.stateDir, `chore(speckit): update state for ${taskId}`);
   }
 
@@ -48,22 +48,23 @@ export class StateManager {
     await this.appendMetrics({ task_id: taskId, completed: new Date().toISOString() });
   }
 
-  async updateCursorContext(state) {
-    const contextDir = path.join(this.projectRoot, '.cursor/context');
+  async updateIDEContext(state) {
+    // IDE-agnostic context files for any editor
+    const contextDir = path.join(this.projectRoot, '.speckit/context');
     await fs.mkdir(contextDir, { recursive: true });
 
     // Main state summary
-    const statePath = path.join(contextDir, 'speckit-state.md');
-    const stateContent = `## Current SPECKIT State (Auto-generated)
+    const statePath = path.join(contextDir, 'current-state.md');
+    const stateContent = `# Current SpecKit State (Auto-generated)
 
 **Task:** ${state.taskId}
 **Phase:** ${state.phase}
 **Status:** ${state.status}
 
-### Latest Agent Outputs:
+## Latest Agent Outputs
 ${state.agentOutputs?.map(o => `- **${o.agent}**: ${o.summary}`).join('\n') || '- (none)'}
 
-### Next Steps:
+## Next Steps
 ${state.nextSteps?.map((s, i) => `${i + 1}. ${s}`).join('\n') || '- (none)'}
 
 ---
@@ -72,26 +73,26 @@ Last updated: ${new Date().toLocaleString()}
     await fs.writeFile(statePath, stateContent);
 
     // Active task details
-    const taskPath = path.join(contextDir, 'speckit-active-task.md');
-    const taskContent = `## Active Task Details
+    const taskPath = path.join(contextDir, 'active-task.md');
+    const taskContent = `# Active Task Details
 
 **ID:** ${state.taskId}
 **Created:** ${state.timestamp}
 **Phase:** ${state.phase} / ${state.plan?.phases?.length || 0}
 
-### Plan Summary:
+## Plan Summary
 ${state.plan?.summary || 'No description'}
 
-### Phases:
+## Phases
 ${state.plan?.phases?.map(p =>
-  `#### Phase ${p.phase} (${p.parallel ? 'Parallel' : 'Sequential'})
+  `### Phase ${p.phase} (${p.parallel ? 'Parallel' : 'Sequential'})
 ${p.subtasks?.map(st => `- [${st.agent}] ${st.description}`).join('\n') || ''}`
 ).join('\n\n') || 'No phases defined'}
 
-### Risks:
+## Risks
 ${state.plan?.risks?.map(r => `- ⚠️ ${r}`).join('\n') || '- None identified'}
 
-### Estimated Duration:
+## Estimated Duration
 ${state.plan?.total_estimated_minutes || 0} minutes
 
 ---
@@ -100,30 +101,30 @@ ${state.plan?.total_estimated_minutes || 0} minutes
     await fs.writeFile(taskPath, taskContent);
 
     // Constitution reference (static, only create if missing)
-    const constitutionPath = path.join(contextDir, 'speckit-constitution.md');
+    const constitutionPath = path.join(contextDir, 'constitutional-rules.md');
     try {
       await fs.access(constitutionPath);
     } catch {
-      const constitutionContent = `## Constitutional Rules Reference
+      const constitutionContent = `# Constitutional Rules Reference
 
 This file provides quick reference to the project's constitutional rules.
 
 **Full rules:** \`.speckit/constitutional-rules.yaml\`
 
-### Agent Roles:
+## Agent Roles
 - **GPT-5**: Orchestrator, planner, decision maker
 - **Qwen**: Implementation engineer (strict spec adherence)
 - **Claude**: Security reviewer, architect (veto power)
 - **Gemini**: Infrastructure specialist (GCP, databases, CI/CD)
 
-### Key Constraints:
+## Key Constraints
 - Qwen CANNOT: change schemas, modify auth, add dependencies, change API contracts
 - Claude CAN veto: HIGH/CRITICAL security risks (with remediation)
 - All schema changes require: GPT-5 + Claude approval
 - All auth changes require: GPT-5 + Claude review (mandatory)
 
-### Override Protocol:
-Use \`/speckit-override <rule-id> <reason>\` to bypass a rule with justification.
+## Override Protocol
+Use \`npm run speckit:override <rule-id> <reason>\` to bypass a rule with justification.
 
 ---
 *This file is static - edit \`.speckit/constitutional-rules.yaml\` to modify rules*
@@ -131,7 +132,7 @@ Use \`/speckit-override <rule-id> <reason>\` to bypass a rule with justification
       await fs.writeFile(constitutionPath, constitutionContent);
     }
 
-    await this.gitAddCommitSafe(contextDir, 'chore(speckit): update cursor context');
+    await this.gitAddCommitSafe(contextDir, 'chore(speckit): update IDE context');
   }
 
   async gitAddCommitSafe(targetPath, message) {
