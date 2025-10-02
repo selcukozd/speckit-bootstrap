@@ -1,5 +1,5 @@
 {
-  "name": "sales-v2",
+  "name": "speckit-bootstrap",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -20,8 +20,8 @@
     "agent:claude": "node scripts/agents/claude-cli.js",
     "agent:gemini": "node scripts/agents/gemini-cli.js"
   },
-  "devDependencies": {},
   "dependencies": {
+    "node-fetch": "^3.3.2",
     "yaml": "^2.5.1"
   }
 }

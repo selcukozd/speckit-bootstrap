@@ -15,7 +15,7 @@ Bu guide ile 5 dakikada ilk feature spec'ini oluştur ve multi-agent workflow'u 
 ## 📦 Adım 1: Projeyi Clone'la (30 saniye)
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/speckit-bootstrap.git my-project
+git clone https://github.com/selcukozd/speckit-bootstrap.git my-project
 cd my-project
 ```
 

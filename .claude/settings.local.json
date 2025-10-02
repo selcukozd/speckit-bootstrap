@@ -9,7 +9,8 @@
       "Bash(npm run agent:qwen:*)",
       "Bash(npm run agent:claude:*)",
       "Bash(git checkout:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
