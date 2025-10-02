@@ -1,0 +1,342 @@
+# Project Services Configuration
+# This file stores reusable service configurations for your projects
+# Based on real deployment configuration from Sales-Dashboard production system
+
+version: '2.0'
+last_updated: '2025-10-01'
+
+# === REAL GCP CONFIGURATION ===
+# These are actual values from production Sales-Dashboard
+gcp_defaults:
+  project_id: 'konyali-saat-etl'  # Real GCP project ID
+  region: 'europe-west2'          # London region (low latency for EU)
+  zone: 'europe-west2-a'
+  billing_account: 'YOUR_BILLING_ACCOUNT_ID'  # Update per project
+
+github:
+  account: 'selcuk'  # Your GitHub username
+  organization: 'Konyali-Saat'  # Your GitHub org (optional)
+
+  repositories:
+    template:
+      name: '{project-name}'
+      branch: 'main'
+      protected_branches: ['main', 'production', 'staging']
+
+  workflow_strategy:
+    staging_first: true  # ALWAYS deploy to staging first
+    branches:
+      development: 'dev'
+      staging: 'staging'
+      production: 'main'
+
+  secrets:
+    # These are secret names - values come from environment
+    - GITHUB_TOKEN
+    - GITHUB_ACTIONS_TOKEN
+
+  workflow_templates:
+    ci_cd: '.github/workflows/ci-cd.yml'
+    deploy_production: '.github/workflows/deploy-production.yml'
+
+  labels:
+    - 'bug'
+    - 'enhancement'
+    - 'documentation'
+    - 'security'
+    - 'performance'
+    - 'speckit-task'
+
+  branch_protection:
+    require_pr_reviews: true
+    required_approving_reviews: 1
+    dismiss_stale_reviews: true
+    require_status_checks: true
+    status_checks: ['test', 'lint', 'typecheck', 'build']
+
+google_cloud:
+  project_id: 'your-gcp-project-id'  # Update per project
+  region: 'us-central1'
+  zone: 'us-central1-a'
+
+  service_account:
+    name: 'speckit-orchestrator'
+    roles:
+      - 'roles/run.admin'
+      - 'roles/bigquery.admin'
+      - 'roles/storage.admin'
+      - 'roles/cloudbuild.builds.editor'
+
+  secrets:
+    - GCP_PROJECT_ID
+    - GCP_SERVICE_ACCOUNT_KEY
+    - GOOGLE_APPLICATION_CREDENTIALS
+
+  billing:
+    budget_name: 'monthly-budget'
+    amount: 100  # USD per month
+    alert_thresholds: [50, 90, 100]
+
+bigquery:
+  dataset_prefix: 'sales'  # Update per project
+  location: 'US'
+
+  datasets:
+    raw:
+      name: 'raw_data'
+      description: 'Raw data from sources'
+      default_table_expiration_ms: 2592000000  # 30 days
+
+    processed:
+      name: 'processed_data'
+      description: 'Cleaned and transformed data'
+      default_table_expiration_ms: null  # No expiration
+
+    analytics:
+      name: 'analytics'
+      description: 'Analytics and reporting tables'
+      default_table_expiration_ms: null
+
+  common_tables:
+    users:
+      schema:
+        - { name: 'id', type: 'STRING', mode: 'REQUIRED' }
+        - { name: 'email', type: 'STRING', mode: 'REQUIRED' }
+        - { name: 'created_at', type: 'TIMESTAMP', mode: 'REQUIRED' }
+        - { name: 'updated_at', type: 'TIMESTAMP' }
+      partitioning:
+        type: 'DAY'
+        field: 'created_at'
+
+    events:
+      schema:
+        - { name: 'event_id', type: 'STRING', mode: 'REQUIRED' }
+        - { name: 'user_id', type: 'STRING' }
+        - { name: 'event_type', type: 'STRING', mode: 'REQUIRED' }
+        - { name: 'event_data', type: 'JSON' }
+        - { name: 'timestamp', type: 'TIMESTAMP', mode: 'REQUIRED' }
+      partitioning:
+        type: 'DAY'
+        field: 'timestamp'
+
+  query_templates:
+    daily_active_users: |
+      SELECT DATE(timestamp) as date, COUNT(DISTINCT user_id) as dau
+      FROM `{project}.{dataset}.events`
+      WHERE timestamp >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 30 DAY)
+      GROUP BY date
+      ORDER BY date DESC
+
+    user_retention: |
+      WITH cohorts AS (
+        SELECT user_id, DATE(MIN(timestamp)) as cohort_date
+        FROM `{project}.{dataset}.events`
+        GROUP BY user_id
+      )
+      SELECT cohort_date,
+             COUNT(DISTINCT user_id) as users
+      FROM cohorts
+      GROUP BY cohort_date
+      ORDER BY cohort_date DESC
+
+cloud_run:
+  service_defaults:
+    region: 'us-central1'
+    cpu: '1'
+    memory: '512Mi'
+    timeout: 300
+    max_instances: 10
+    min_instances: 0
+    concurrency: 80
+
+  services:
+    api:
+      name: '{project-name}-api'
+      port: 3000
+      cpu: '2'
+      memory: '1Gi'
+      env_vars:
+        NODE_ENV: 'production'
+        DATABASE_URL: 'secret:database-url'
+        REDIS_URL: 'secret:redis-url'
+
+    worker:
+      name: '{project-name}-worker'
+      cpu: '1'
+      memory: '2Gi'
+      max_instances: 5
+
+    cron:
+      name: '{project-name}-cron'
+      schedule: '0 */6 * * *'  # Every 6 hours
+      cpu: '1'
+      memory: '512Mi'
+
+  ingress:
+    allow_all: false
+    allow_internal_and_cloud_load_balancing: true
+
+  secrets:
+    - DATABASE_URL
+    - REDIS_URL
+    - API_SECRET_KEY
+    - JWT_SECRET
+
+vercel:
+  framework: 'nextjs'
+  build_command: 'npm run build'
+  output_directory: '.next'
+  install_command: 'npm install'
+  dev_command: 'npm run dev'
+
+  env_vars:
+    production:
+      - NEXT_PUBLIC_API_URL
+      - DATABASE_URL
+      - REDIS_URL
+    preview:
+      - NEXT_PUBLIC_API_URL
+      - DATABASE_URL_PREVIEW
+
+  domains:
+    production: 'yourdomain.com'
+    preview: 'preview.yourdomain.com'
+
+databases:
+  postgresql:
+    version: '15'
+    instance_type: 'db-f1-micro'  # GCP SQL
+    storage_gb: 10
+    backup_enabled: true
+    backup_start_time: '03:00'
+
+    databases:
+      main:
+        name: '{project-name}'
+        charset: 'UTF8'
+      test:
+        name: '{project-name}_test'
+        charset: 'UTF8'
+
+    users:
+      - name: 'app_user'
+        privileges: ['SELECT', 'INSERT', 'UPDATE', 'DELETE']
+      - name: 'readonly_user'
+        privileges: ['SELECT']
+
+  redis:
+    version: '7'
+    memory_size_gb: 1
+    tier: 'BASIC'
+
+    keyspaces:
+      sessions: 'session:*'
+      cache: 'cache:*'
+      queue: 'queue:*'
+
+monitoring:
+  google_cloud_monitoring:
+    enabled: true
+    uptime_checks:
+      - name: 'api-health'
+        endpoint: '/health'
+        period: 60
+        timeout: 10
+
+    alerts:
+      - name: 'high-error-rate'
+        condition: 'error_rate > 0.05'
+        notification_channels: ['email', 'slack']
+
+      - name: 'high-latency'
+        condition: 'p95_latency > 1000'  # ms
+        notification_channels: ['email']
+
+  log_sinks:
+    errors:
+      destination: 'bigquery'
+      filter: 'severity >= ERROR'
+      dataset: 'logs'
+
+ci_cd:
+  github_actions:
+    workflows:
+      test:
+        trigger: ['push', 'pull_request']
+        steps:
+          - checkout
+          - setup_node
+          - install_dependencies
+          - run_tests
+          - upload_coverage
+
+      deploy_preview:
+        trigger: ['pull_request']
+        steps:
+          - checkout
+          - setup_node
+          - build
+          - deploy_to_cloud_run_preview
+
+      deploy_production:
+        trigger: ['push to main']
+        steps:
+          - checkout
+          - setup_node
+          - run_tests
+          - build
+          - deploy_to_cloud_run
+          - run_smoke_tests
+          - notify_slack
+
+  secrets_required:
+    - GCP_PROJECT_ID
+    - GCP_SERVICE_ACCOUNT_KEY
+    - DATABASE_URL
+    - REDIS_URL
+    - SLACK_WEBHOOK_URL
+    - GITHUB_TOKEN
+
+common_npm_packages:
+  dependencies:
+    - 'next@latest'
+    - 'react@latest'
+    - 'react-dom@latest'
+    - '@prisma/client'
+    - 'zod'
+    - 'date-fns'
+
+  devDependencies:
+    - 'typescript'
+    - '@types/node'
+    - '@types/react'
+    - 'eslint'
+    - 'prettier'
+    - 'vitest'
+    - 'prisma'
+    - 'tailwindcss'
+
+environment_variables:
+  # Template for .env.example
+  required:
+    - NODE_ENV
+    - DATABASE_URL
+    - REDIS_URL
+    - API_SECRET_KEY
+    - JWT_SECRET
+    - NEXT_PUBLIC_API_URL
+
+  optional:
+    - GOOGLE_ANALYTICS_ID
+    - SENTRY_DSN
+    - SLACK_WEBHOOK_URL
+
+  gcp_specific:
+    - GCP_PROJECT_ID
+    - GOOGLE_APPLICATION_CREDENTIALS
+    - BIGQUERY_DATASET
+
+# Notes:
+# - Values with {project-name} will be replaced during setup
+# - Secret values should be stored in environment or secret manager
+# - This file serves as a template and reference

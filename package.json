@@ -1,0 +1,27 @@
+{
+  "name": "sales-v2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "speckit:plan": "node scripts/speckit/orchestrator.js plan",
+    "speckit:implement": "node scripts/speckit/orchestrator.js implement",
+    "speckit:status": "node scripts/speckit/orchestrator.js status",
+    "speckit:review": "node scripts/speckit/orchestrator.js review",
+    "speckit:metrics": "node scripts/speckit/orchestrator.js metrics",
+    "speckit:lessons": "node scripts/speckit/orchestrator.js lessons",
+    "speckit:override": "node scripts/speckit/override-manager.js",
+    "speckit:validate": "node scripts/speckit/cli-validator.js",
+    "speckit:init": "node scripts/speckit/project-setup.js init",
+    "speckit:create": "node scripts/speckit/create-feature.js",
+    "speckit:check": "node scripts/speckit/check-prerequisites.js",
+    "speckit:setup-plan": "node scripts/speckit/setup-plan.js",
+    "agent:qwen": "node scripts/agents/qwen-cli.js",
+    "agent:claude": "node scripts/agents/claude-cli.js",
+    "agent:gemini": "node scripts/agents/gemini-cli.js"
+  },
+  "devDependencies": {},
+  "dependencies": {
+    "yaml": "^2.5.1"
+  }
+}

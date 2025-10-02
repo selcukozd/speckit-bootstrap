@@ -16,7 +16,7 @@ Constitution Authority: The project constitution (`.specify/memory/constitution.
 
 Execution steps:
 
-1. Run `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks` once from repo root and parse JSON for FEATURE_DIR and AVAILABLE_DOCS. Derive absolute paths:
+1. Run `npm run speckit:check -- -Json -RequireTasks -IncludeTasks` once and parse JSON for FEATURE_DIR and AVAILABLE_DOCS. Derive absolute paths:
    - SPEC = FEATURE_DIR/spec.md
    - PLAN = FEATURE_DIR/plan.md
    - TASKS = FEATURE_DIR/tasks.md

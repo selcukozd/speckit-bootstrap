@@ -1,3 +1,46 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.npm
 
-# SpecKit state (some files are temporary)
-.specify/state/agent-outputs/**/*.tmp
+# SpecKit State (project-specific, don't commit)
+.speckit/state/
+.cursor/context/speckit-*.md
+specs/*/
+
+# Keep example spec
+!specs/000-example/
+
+# Logs
+*.log
+.speckit/state/logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/tasks.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Temp files
+*.tmp
+.temp/
+.cache/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Agent API Keys (NEVER commit these!)
+.agent-keys.json
+.api-config.json

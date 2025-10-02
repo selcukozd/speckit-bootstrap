@@ -1,0 +1,10 @@
+{
+  "name": "speckit-orchestrator",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "plan": "node index.js plan",
+    "implement": "node index.js implement"
+  },
+  "dependencies": {}
+}

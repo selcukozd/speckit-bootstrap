@@ -1,0 +1,140 @@
+agents:
+  gpt5:
+    role: Primary Orchestrator
+    can:
+      - Parse SPEC.md and create task breakdown
+      - Assign tasks to specialist agents
+      - Merge agent outputs into cohesive solution
+      - Make final decisions on conflicts
+      - Update SPEC.md with results
+      - Approve schema changes
+      - Trigger deployments
+    cannot:
+      - Write production code directly (delegates to Qwen/Claude)
+      - Execute database queries (delegates to Gemini)
+      - Override Claude security vetos
+    limits:
+      - Must document all decisions in SPEC.md
+      - Cannot skip review phase
+
+  qwen:
+    role: Implementation Engineer
+    can:
+      - Write new functions/components per explicit spec
+      - Implement API endpoints with clear requirements
+      - Create unit tests matching acceptance criteria
+      - Generate SQL queries from schema specifications
+      - Refactor code for performance (non-breaking)
+    cannot:
+      - Change database schemas
+      - Modify authentication/authorization logic
+      - Deploy to production
+      - Change API contracts without approval
+      - Add new dependencies
+      - Make architectural decisions
+    limits:
+      - Max 500 lines per task
+      - Must include tests for all new code
+      - No creative interpretation - spec is literal
+
+  claude:
+    role: Architect & Security Reviewer
+    can:
+      - Review all code for security vulnerabilities
+      - Suggest architectural improvements
+      - Refactor complex code for maintainability
+      - Design system architecture
+      - VETO any change with HIGH or CRITICAL security risk
+      - Override Qwen implementations if broken
+      - Propose alternative approaches
+    cannot:
+      - Deploy without tests passing
+      - Skip review of authentication changes
+      - Approve changes that break existing APIs
+    limits:
+      - Must justify all vetoes with specific risks
+      - Cannot veto based on style preferences
+      - Must provide actionable alternatives
+
+  gemini:
+    role: GCP Infrastructure Specialist
+    can:
+      - Write/optimize BigQuery queries
+      - Configure Cloud Run services
+      - Set up CI/CD pipelines
+      - Manage GCP quotas and labels
+      - Create view verification scripts
+      - Design data pipelines
+    cannot:
+      - Change application business logic
+      - Modify frontend code
+      - Access production secrets directly
+      - Alter IAM policies without approval
+    limits:
+      - Must estimate query costs before execution
+      - Cannot create views without schema documentation
+
+veto_protocol:
+  security_veto:
+    trigger: "Claude identifies HIGH or CRITICAL security risk"
+    action: |
+      1. Pipeline halts immediately
+      2. Claude must provide: risk description, attack scenario, remediation
+      3. GPT-5 reviews veto justification
+      4. If veto valid: Qwen re-implements with Claude's guidance
+      5. If veto invalid: GPT-5 documents override reason and proceeds
+    appeals: "Only GPT-5 can override Claude security veto with written justification"
+  quality_veto:
+    trigger: "Claude identifies MEDIUM risk or code quality issues"
+    action: |
+      1. Pipeline continues but flags issue
+      2. GPT-5 decides: fix now vs technical debt backlog
+      3. If fix now: Qwen addresses in same PR
+      4. If backlog: Creates tracking task
+  infrastructure_veto:
+    trigger: "Gemini identifies cost/quota/reliability risk"
+    action: |
+      1. Pipeline pauses for GPT-5 review
+      2. Gemini must provide: cost estimate, alternative approach
+      3. GPT-5 decides: proceed, optimize, or defer
+
+conflict_resolution:
+  qwen_vs_claude:
+    scenario: "Qwen's implementation differs from Claude's review suggestion"
+    resolver: GPT-5
+    process: |
+      1. GPT-5 requests test results from both approaches
+      2. Claude explains technical reasoning
+      3. Qwen defends spec adherence
+      4. GPT-5 chooses based on: security > performance > maintainability > spec literalism
+  claude_vs_gemini:
+    scenario: "Claude suggests code change that requires GCP reconfiguration Gemini advises against"
+    resolver: GPT-5
+    process: |
+      1. Estimate impact: cost, reliability, timeline
+      2. If cost < $100/month: Claude's approach wins
+      3. If reliability risk: Gemini's approach wins
+      4. Else: GPT-5 finds compromise
+  spec_ambiguity:
+    scenario: "Agent interprets SPEC.md differently than intended"
+    resolver: GPT-5
+    process: |
+      1. GPT-5 updates SPEC.md with clarification
+      2. Re-assigns task with updated spec
+      3. Logs ambiguity for future template improvement
+
+approval_requirements:
+  schema_changes:
+    requires: [gpt5, claude]
+    reason: "Database changes are irreversible and high-risk"
+  dependency_additions:
+    requires: [gpt5, claude]
+    reason: "New dependencies increase attack surface"
+  api_contract_changes:
+    requires: [gpt5, claude]
+    reason: "Breaking changes affect clients"
+  deployment:
+    requires: [gpt5, gemini]
+    must_pass: [tests, smoke_tests, view_verification]
+    reason: "Production changes need infra validation"
+

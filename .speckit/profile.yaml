@@ -1,0 +1,33 @@
+# SpecKit Technology Profile (stack-agnostic)
+# Select or customize for your project. Example defaults below.
+
+language: unset            # e.g., typescript | python | go | java
+framework: unset           # e.g., nextjs | fastapi | express | spring
+package_manager: unset     # e.g., npm | pnpm | yarn | pip | poetry | go
+
+# Quality toolchain
+linter: unset              # e.g., eslint | flake8 | golangci-lint
+formatter: unset           # e.g., prettier | black | gofmt
+test_runner: unset         # e.g., vitest | jest | pytest | go test
+coverage_threshold: 0.8    # 80% default
+
+# Data & infra
+datastores: []             # e.g., [postgres, redis]
+message_bus: null          # e.g., pubsub | kafka | rabbitmq
+cache: null                # e.g., redis
+
+# Security defaults
+security_defaults:
+  validation_lib: unset    # e.g., zod | pydantic
+  secret_manager: unset    # e.g., env | gcp_secret_manager | aws_secrets_manager
+  auth_scheme: unset       # e.g., session | jwt | oauth2
+
+# Performance budgets (defaults)
+performance_budgets:
+  api_p95_ms: 200
+  bundle_kb: 500
+  job_latency_ms: 1000
+
+# Notes
+# - Update these values per project.
+# - Keep this file in version control; do not store secrets here.

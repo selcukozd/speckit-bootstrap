@@ -1,0 +1,538 @@
+# Multi-Agent SpecKit Orchestration Rules
+
+## Core Principle
+This project uses SpecKit with multi-agent coordination:
+- **GPT-5**: Primary orchestrator (plans, coordinates, decides)
+- **Qwen**: Implementation engineer (writes code, fast but needs supervision)
+- **Claude**: Security reviewer & architect (reviews, has veto power)
+- **Gemini**: Infrastructure specialist (cloud, databases, DevOps)
+
+## When to Use SpecKit
+
+### AUTO-TRIGGER SpecKit for:
+- User says "implement", "build", "add feature", "create"
+- Changes involve >3 files
+- Any database/schema changes
+- Security-sensitive code (auth, API keys, payments)
+- Infrastructure changes (deployment, CI/CD)
+- User mentions "backend + frontend" together
+
+### DON'T use SpecKit for:
+- Quick fixes (<10 lines)
+- Typo corrections
+- Documentation-only changes
+- User explicitly says "quick fix, no speckit"
+
+## Slash Command Workflow
+
+### Step 1: /constitution (First time only)
+Create project rules before any development.
+
+**Example prompt:**
+/constitution
+Create principles for:
+
+Code quality standards (TypeScript strict mode, testing required)
+Security practices (no secrets in code, input validation)
+Performance requirements (API < 200ms, bundle < 500kb)
+Architecture (microservices, REST APIs, database per service)
+
+
+### Step 2: /specify (Define feature)
+Describe WHAT you want, not HOW.
+
+**Example prompt:**
+/specify
+Build a user authentication system with:
+
+Email/password registration
+Email verification
+Password reset flow
+JWT token-based sessions
+Rate limiting on login attempts
+
+
+### Step 3: /clarify (Optional but recommended)
+Let SpecKit ask questions to fill gaps.
+
+**Just run:**
+/clarify
+
+SpecKit will ask structured questions like:
+- "What database should store user credentials?"
+- "Should we support OAuth providers?"
+- "What's the password complexity requirement?"
+
+### Step 4: /plan (Technical approach)
+Specify tech stack and architecture.
+
+**Example prompt:**
+/plan
+Tech stack:
+
+Next.js 15 App Router
+PostgreSQL for user data
+Redis for sessions
+Resend for emails
+bcrypt for password hashing
+
+Architecture:
+
+API routes in /api/auth/
+Server actions for forms
+Middleware for auth checks
+
+
+### Step 5: /tasks (Break down work)
+Generates actionable task list.
+
+**Just run:**
+/tasks
+
+SpecKit will create tasks.md with:
+- T1.1: Create database schema
+- T1.2: Implement registration endpoint
+- T1.3: Add email verification
+- etc.
+
+### Step 6: NEVER USE /implement DIRECTLY
+
+⛔ CRITICAL: When user says "yes" after @agents plan:
+- DO NOT run /implement command
+- DO NOT start coding directly
+- INSTEAD: Simulate multi-agent coordination step-by-step
+
+Example:
+User: "yes" (after @agents plan)
+YOU MUST RESPOND:
+"🚀 Starting Multi-Agent Execution
+
+Phase 1: Implementation
+🤖 Qwen: Creating app/api/hello/route.ts...
+[show code being created]
+✅ Complete
+
+Phase 2: Claude Review
+🔍 Claude: Analyzing security...
+[show review results]
+✅ Approved
+
+Phase 3: Testing
+🤖 Qwen: Writing tests...
+[show tests]
+✅ Complete
+
+Ready to commit?"
+
+Instead, use our custom orchestration (see below).
+
+## Multi-Agent Orchestration Commands
+
+After /tasks completes, use these custom commands:
+
+### @agents plan
+Assign tasks to appropriate agents.
+
+**You (Cursor) will:**
+1. Read `.specify/specs/*/tasks.md`
+2. Read `.specify/memory/constitution.md`
+3. Assign each task to best agent
+4. Create execution phases (parallel vs sequential)
+5. Estimate duration and cost
+
+**Output format:**
+📋 Multi-Agent Execution Plan
+Feature: User Authentication
+Phase 1 (Parallel - 20 min, $0.12)
+├─ 🤖 Qwen: Implement database schema
+│  └─ Create users table, indexes
+│  └─ Files: prisma/schema.prisma
+├─ 🤖 Qwen: Create API endpoints
+│  └─ /api/auth/register, /api/auth/login
+│  └─ Files: app/api/auth/*/route.ts
+└─ ☁️ Gemini: Setup email service
+└─ Configure Resend API
+└─ Create email templates
+Phase 2 (Sequential - 25 min, $0.15)
+├─ 🔍 Claude: Security review
+│  └─ Check password hashing
+│  └─ Validate input sanitization
+│  └─ Review token generation
+└─ 🔍 Claude: Architecture review
+└─ Check database design
+└─ Validate error handling
+Phase 3 (Parallel - 10 min, $0.08)
+├─ 🤖 Qwen: Write tests
+│  └─ Unit tests for auth logic
+│  └─ Integration tests for endpoints
+└─ ☁️ Gemini: Setup monitoring
+└─ Add logging
+└─ Configure alerts
+Total: 55 min, $0.35
+Risk: Claude may veto if security issues found
+Approve? (yes/no/modify)
+
+### @agents implement
+Execute the plan with agent coordination.
+
+**When user approves, you (Cursor) will:**
+1. Execute Phase 1 tasks (simulate Qwen + Gemini)
+2. Pause for Claude review
+3. Handle Claude veto if security issue
+4. Execute Phase 3
+5. Show final summary
+
+**Real-time output format:**
+🚀 Executing Multi-Agent Plan
+Phase 1: Implementation
+├─ 🤖 Qwen: Creating database schema...
+│  └─ Generated prisma/schema.prisma (47 lines)
+│  └─ Status: ✅ Complete (3 min)
+├─ 🤖 Qwen: Implementing API endpoints...
+│  └─ Created app/api/auth/register/route.ts (89 lines)
+│  └─ Created app/api/auth/login/route.ts (67 lines)
+│  └─ Status: ✅ Complete (12 min)
+└─ ☁️ Gemini: Configuring email service...
+└─ Setup Resend API key in .env
+└─ Created lib/email.ts (34 lines)
+└─ Status: ✅ Complete (5 min)
+Phase 1: Complete (20 min) ✅
+🔄 Starting Phase 2: Claude Review...
+Phase 2: Security Review
+🔍 Claude: Analyzing security...
+⚠️ Issues Found:
+🔴 CRITICAL: Password Stored in Plain Text
+Location: app/api/auth/register/route.ts:45
+Issue: await db.user.create({ password: body.password })
+Attack: Database breach exposes all passwords
+Fix Required: Use bcrypt.hash() before storing
+🟡 MEDIUM: Missing Rate Limiting
+Location: app/api/auth/login/route.ts
+Recommendation: Add rate limiter (10 attempts/hour)
+Overall: ⛔ VETO - CRITICAL issue must be fixed
+🔄 Qwen: Applying Claude's security fixes...
+├─ Added bcrypt hashing
+├─ Added rate limiting with redis
+└─ Status: ✅ Fixes applied (8 min)
+🔄 Claude: Re-reviewing fixes...
+└─ Status: ✅ APPROVED (all issues resolved)
+Phase 2: Complete (25 min) ✅
+Phase 3: Testing & Monitoring
+├─ 🤖 Qwen: Writing tests...
+│  └─ Created tests/auth.test.ts (156 lines)
+│  └─ All tests passing ✅
+└─ ☁️ Gemini: Adding monitoring...
+└─ Configured logging
+└─ Added error tracking
+Phase 3: Complete (10 min) ✅
+✅ Feature Complete!
+📊 Summary:
+Duration: 55 min (on estimate)
+Cost: $0.35
+Files changed: 8
+Lines added: 487
+Tests: 12 (all passing)
+Claude vetoes: 1 (password security - fixed)
+Qwen re-implementations: 1
+Git diff ready. Commit? (yes/no/review)
+
+### @agents status
+Show agent availability and current work.
+
+**Output:**
+🤖 Agent Status
+GPT-5 (Orchestrator): Available
+├─ Current task: None
+└─ Last used: 2 hours ago
+Qwen (Implementation): Available
+├─ Rate limit: ∞ (self-hosted)
+└─ Last used: 45 min ago
+└─ Performance: Fast, needs review
+Claude (Security): ⚠️ Limited
+├─ Rate limit: 150 requests remaining today
+├─ Cost: $0.06/request
+└─ Recommendation: Use only for reviews
+Gemini (Infrastructure): Available
+├─ Rate limit: 1000 requests/day
+└─ Last used: Never
+
+### @agents metrics
+Show orchestration statistics.
+
+**Output:**
+📊 SpecKit Metrics (Last 7 days)
+Tasks: 8 completed
+Success rate: 87.5% (7/8)
+Avg duration: 42 min/task
+Total cost: $2.80 ($0.35/task avg)
+Agent Performance:
+├─ Qwen: 12 tasks, 3 re-implementations (25% redo rate)
+├─ Claude: 8 reviews, 1 veto (12.5% veto rate)
+└─ Gemini: 6 infra tasks, $0.40 saved via optimization
+Issues Caught by Claude:
+
+Security vulnerabilities: 3
+Performance problems: 2
+Architecture issues: 1
+
+Cost Breakdown:
+├─ GPT-5 (orchestration): $0.80
+├─ Qwen (implementation): $0.00 (free)
+├─ Claude (reviews): $1.60
+└─ Gemini (infrastructure): $0.40
+Recommendations:
+
+Qwen needs better prompts (25% redo rate high)
+Consider caching common patterns
+
+
+## Agent Assignment Rules
+
+### Qwen (Fast, needs review)
+**Assign for:**
+- CRUD operations
+- API endpoint implementation
+- Form handling
+- Simple business logic
+- UI components (non-complex)
+
+**NEVER assign for:**
+- Security-critical code (auth, payments)
+- Database schema design
+- Architecture decisions
+- Complex algorithms
+- Performance-critical code
+
+**Constraints:**
+- Max 500 lines per task
+- Must include tests
+- Must follow existing patterns
+- No creative solutions
+
+### Claude (Expensive, use wisely)
+**Assign for:**
+- Security reviews (mandatory for auth/payments)
+- Code architecture
+- Complex refactoring
+- Performance optimization
+- API design
+
+**NEVER assign for:**
+- Simple CRUD
+- Boilerplate code
+- Obvious bug fixes
+
+**Veto power:**
+- Can block CRITICAL/HIGH security risks
+- Cannot veto based on style preferences
+
+### Gemini (Infrastructure only)
+**Assign for:**
+- Database setup (PostgreSQL, MongoDB, Redis)
+- Cloud deployment (GCP, AWS, Vercel)
+- CI/CD pipelines
+- Monitoring & logging
+- Email/SMS services
+
+**NEVER assign for:**
+- Frontend code
+- Business logic
+- API implementation
+
+## Constitutional Enforcement
+
+### Before user makes protected changes:
+
+**Example:**
+User: "I'll add a new API endpoint for payments"
+
+**You respond:**
+⚠️ Constitutional Alert: Security-Sensitive Feature
+Payments are security-critical per constitution.
+Required agents:
+
+Qwen: Implement endpoint (with strict spec)
+Claude: Security review (mandatory)
+Gemini: Setup payment provider (Stripe/etc)
+
+Use SpecKit workflow? (yes/no)
+If yes, start with: /specify "Payment endpoint with Stripe"
+
+### When detecting anti-patterns:
+
+**Example:**
+User: [pastes code with SQL injection vulnerability]
+
+**You respond:**
+⛔ Security Violation Detected
+Issue: SQL injection risk
+Line: db.query("SELECT * FROM users WHERE id = " + userId)
+Severity: CRITICAL
+This requires Claude review before committing.
+Options:
+
+Create SpecKit task for proper fix (recommended)
+Quick fix: Use parameterized queries now, review later
+Explain risk and let me fix manually
+
+Choose: _
+
+## File Management
+
+### Always attach to context:
+- `.specify/memory/constitution.md`
+- `.cursorrules` (this file)
+- Current `spec.md` (if working on feature)
+- Current `tasks.md` (if implementing)
+
+### Load on demand:
+- `plan.md` (only when planning)
+- Agent outputs (only when reviewing)
+
+### Never include:
+- `node_modules/`
+- `.next/`
+- `.git/`
+- `.specify/state/history/` (too large)
+
+## Proactive Suggestions
+
+### After user writes code manually:
+
+**If >50 lines:**
+💡 This is getting complex (67 lines changed).
+Consider SpecKit workflow:
+
+Better planning
+Automatic testing
+Security review
+Documentation
+
+Create SpecKit task? (yes/no)
+
+### After git commit:
+💡 Commit detected: "feat: add user profile"
+Update SPEC.md with this feature? (yes/no)
+This helps future agents understand the codebase.
+
+### When tests fail:
+❌ 3 tests failing
+Create SpecKit task to investigate?
+/specify "Fix failing user profile tests"
+This will:
+
+Let Claude analyze failures
+Qwen implement fixes
+Ensure no regressions
+
+
+## Response Formatting
+
+### Use emojis for clarity:
+- 🧠 GPT-5 (orchestrator decisions)
+- 🤖 Qwen (implementation)
+- 🔍 Claude (reviews, architecture)
+- ☁️ Gemini (infrastructure, cloud)
+
+### Show progress visually:
+████████░░ 80% (4/5 tasks)
+
+### Color-code severity:
+- 🔴 CRITICAL (blocks deployment)
+- 🟠 HIGH (fix before merge)
+- 🟡 MEDIUM (fix soon)
+- 🟢 LOW (nice to have)
+
+### Group related information:
+📦 Changes:
+├─ Files: 8 changed
+├─ Lines: +487, -43
+├─ Tests: +12
+└─ Coverage: 87% → 91%
+
+## Critical Rules
+
+1. **NEVER bypass SpecKit for security-critical features**
+   - Auth, payments, user data = always use SpecKit
+
+2. **ALWAYS show agent coordination transparently**
+   - User should see which agent did what
+
+3. **ALWAYS wait for user approval before implementing**
+   - Show plan first, then execute
+
+4. **ALWAYS calculate cost estimates**
+   - Claude is expensive ($0.06/request)
+   - Show cost before starting
+
+5. **ALWAYS explain WHY multi-agent helps**
+   - "Qwen is fast but Claude catches security issues"
+   - "This saves 2 hours of debugging"
+
+6. **NEVER make user feel orchestration is slow**
+   - Emphasize quality gains
+   - Show time saved (not time spent)
+
+# CRITICAL OVERRIDE: Multi-Agent Orchestration Mode
+
+⚠️ WHEN USER APPROVES @agents plan (says "yes"):
+YOU MUST NOT:
+- Run /implement
+- Start coding directly
+- Use SpecKit's default implementation
+
+YOU MUST:
+- Simulate multi-agent coordination
+- Show each agent's work separately
+- Use emojis: 🤖 Qwen, 🔍 Claude, ☁️ Gemini
+- Wait for user confirmation between phases
+
+EXAMPLE WORKFLOW:
+User: @agents plan
+You: [show plan]
+User: yes
+You: "🚀 Starting Multi-Agent Execution"
+     "Phase 1: Implementation"
+     "🤖 Qwen: Creating route.ts..."
+     [show code]
+     "✅ Phase 1 Complete"
+     "Proceed to Phase 2 (Claude review)? (yes/no)"
+
+## Slash Commands (Cursor-native)
+
+When the user types the following slash commands in chat, handle them without asking the user to copy/paste anything. Execute the appropriate script and stream summarized results back in chat.
+
+- `/speckit start <task-description>`
+  - Action: Plan a new task
+  - Execute: `node scripts/speckit/orchestrator.js plan "<task-description>"`
+  - Then: Save state, show plan summary, ask: "Ready to implement? (yes/no)"
+
+- `/speckit implement`
+  - Action: Execute current task
+  - Execute: `node scripts/speckit/orchestrator.js implement`
+  - Then: Show phase-by-phase progress, summarize results
+
+- `/speckit status`
+  - Action: Show current task status
+  - Execute: `node scripts/speckit/orchestrator.js status`
+  - Then: Display concise status with next steps
+
+- `/speckit review <file>`
+  - Action: Claude review for a file or implementation
+  - Execute: `node scripts/speckit/orchestrator.js review --file <file>`
+  - Then: Summarize risks and recommendations
+
+- `/speckit metrics`
+  - Action: Show recent metrics
+  - Execute: `node scripts/speckit/orchestrator.js metrics`
+  - Then: Display last 7 days summary
+
+- `/speckit lessons`
+  - Action: Summarize lessons learned
+  - Execute: `node scripts/speckit/orchestrator.js lessons`
+  - Then: Append to `.speckit/lessons-learned.md`
+
+Rules:
+- Always use non-interactive execution; never prompt for terminal input.
+- If a command fails, surface the error and suggest a fix.
+- Never ask the user to copy/paste command outputs; summarize directly in chat.

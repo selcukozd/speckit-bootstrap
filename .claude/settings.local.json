@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Read(//c/Users/selcuk/Desktop/Web Apps/Sales-Dashboard/sales-dashboard/**)",
+      "Bash(git branch:*)",
+      "Read(//c/Users/selcuk/Desktop/**)",
+      "Bash(npm run speckit:plan -- \"Create user authentication\")",
+      "Bash(npm run agent:qwen:*)",
+      "Bash(npm run agent:claude:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
