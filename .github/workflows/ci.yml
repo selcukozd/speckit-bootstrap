@@ -30,8 +30,10 @@ jobs:
       run: npm ci
     
     - name: Run quality checks
-      run: npm run quality:check || echo "⚠️ Quality checks not fully configured yet"
-      continue-on-error: true
+      run: |
+        echo "ℹ️  Running quality checks (bootstrap template - tools not required)"
+        npm run quality:check
+        echo "✅ Quality checks completed (configure linter/formatter/tests for full validation)"
     
     - name: Test orchestrator
       run: npm run speckit:plan -- "CI test task"
