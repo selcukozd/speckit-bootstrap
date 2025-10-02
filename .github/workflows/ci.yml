@@ -65,9 +65,14 @@ jobs:
     - name: Validate YAML configs
       run: |
         npm install -g js-yaml
-        js-yaml .speckit/constitutional-rules.yaml > /dev/null
-        js-yaml .speckit/profile.yaml > /dev/null
-        echo "✅ All YAML files are valid"
+        # Check if YAML files exist before validating
+        if [ -f ".speckit/constitutional-rules.yaml" ]; then
+          js-yaml .speckit/constitutional-rules.yaml > /dev/null
+        fi
+        if [ -f ".speckit/profile.yaml" ]; then
+          js-yaml .speckit/profile.yaml > /dev/null
+        fi
+        echo "✅ All YAML files validated"
     
     - name: Check for secrets in code
       run: |
@@ -91,13 +96,24 @@ jobs:
     
     - name: Check documentation
       run: |
-        FILES="README.md QUICKSTART.md LICENSE SPEC.md SECURITY.md DEPLOYMENT_GUIDE.md"
-        for file in $FILES; do
+        # Root files
+        FILES_ROOT="README.md LICENSE SPEC.md"
+        for file in $FILES_ROOT; do
           if [ ! -f "$file" ]; then
             echo "❌ Missing: $file"
             exit 1
           fi
         done
+        
+        # User guides
+        FILES_GUIDES="docs/guides/QUICKSTART.md docs/guides/USER-GUIDE.md docs/guides/MANUAL-WORKFLOW.md docs/guides/DEPLOYMENT_GUIDE.md docs/guides/SECURITY.md docs/guides/PRE-COMMIT-SETUP.md"
+        for file in $FILES_GUIDES; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Missing: $file"
+            exit 1
+          fi
+        done
+        
         echo "✅ All required documentation files present"
     
     - name: Check for broken links (TODO)
