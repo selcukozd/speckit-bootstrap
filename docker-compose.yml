@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Main application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      # Prevent node_modules from being overwritten
+      - /app/node_modules
+    command: npm run dev
+    restart: unless-stopped
+
+  # Example: Add database service if needed
+  # postgres:
+  #   image: postgres:15-alpine
+  #   environment:
+  #     POSTGRES_USER: speckit
+  #     POSTGRES_PASSWORD: dev_password
+  #     POSTGRES_DB: speckit_dev
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+  # Example: Add Redis for caching if needed
+  # redis:
+  #   image: redis:7-alpine
+  #   ports:
+  #     - "6379:6379"
+  #   command: redis-server --appendonly yes
+  #   volumes:
+  #     - redis_data:/data
+
+# volumes:
+#   postgres_data:
+#   redis_data:
+
